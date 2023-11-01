@@ -1,5 +1,11 @@
 import { createApp } from 'vue'
 import '@/assets/style/global.css';
-import app from './Index.vue'
+import App from './Index.vue';
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
 
-createApp(app).mount('#app')
+const app = createApp(App)
+
+app.use(ElementPlus)
+app.mount('#app')
+
