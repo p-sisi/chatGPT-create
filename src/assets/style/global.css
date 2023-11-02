@@ -27,7 +27,8 @@ body {
   display: flex;
   margin: 0px;
   min-width: 320px;
-  background-color: #fce5cd;
+  height: 200vh;
+  background-color: #f6e9e1;
 }
 
 h1 {
