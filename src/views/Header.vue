@@ -14,7 +14,7 @@
                 <div class="description-title">基于ChatGPT</div>
                 <div class="description-tit">面向对象课程体系</div>
                 <div class="description-desc">超越传统学习，探索未来编程！借助我们的ChatGPT辅助工具，面向对象编程变得如此轻松。探索编程的无限可能性，与ChatGPT一起掌握OOP世界。</div>
-                <el-button type="primary" color="#4840ba" size="large">提问&nbsp;ChatGPT</el-button>
+                <el-button type="primary" color="#4840ba" size="large" @click="handleCreate">提问&nbsp;ChatGPT</el-button>
             </div>
         </div>
         <div class="header-container-divi">
@@ -27,6 +27,11 @@
 </template>
 
 <script setup lang="ts">
+import router from '@/router/index.ts';
+
+const handleCreate = () => {
+    router.push('/ai-create');
+}
 
 </script>
 

@@ -8,7 +8,7 @@
                         class="qa-card"
                         v-for="item in QUESTION_ANSWER_DATA"
                         :key="item.type">
-                            <div class="card-type">{{ item.type }}</div>
+                            <div class="card-type" @click="handleOpenDrawer(item)">{{ item.type }}</div>
                     </div>
                 </div>
             </el-tab-pane>
@@ -38,7 +38,7 @@
                             <!-- 内容 -->
                             <div class="collect-card-body">
                                 <el-scrollbar height="270px" :min-size="10">
-                                    <div >{{ item.answer }}</div>
+                                    {{ item.answer }}
                                 </el-scrollbar>
                             </div>
 
@@ -91,6 +91,13 @@
                     </div>
                 </div>
             </el-tab-pane>
+
+            <!-- 详细问题 -->
+            <el-drawer v-model="isDrawerOpen" >
+                <template #header>
+                    <h4>{{drawerTitle}}</h4>
+                </template>
+            </el-drawer>
         </el-tabs>
     </div>
 </template>
@@ -121,6 +128,15 @@ const handleCopy = (text:string) => {
 //删除
 const handleDelete = async (item:any) => {
     console.log('删除',item);
+}
+
+//drawer
+const isDrawerOpen = ref(false);
+const drawerTitle = ref('');
+
+const handleOpenDrawer = (item: Object) => {
+    isDrawerOpen.value = true;
+    drawerTitle.value = item.type;
 }
 </script>
 
@@ -178,6 +194,7 @@ const handleDelete = async (item:any) => {
         display: flex;
         flex-wrap: wrap;
         .collect-card {
+            
             --el-card-padding: 16px;
             width: 400px;
             height: 410px;
@@ -193,8 +210,6 @@ const handleDelete = async (item:any) => {
                     height: 40px;
                     margin-right: 8px;
                 }
-            }
-            .collect-card-body {
             }
             .collect-card-footer {
                 position: relative;

@@ -1,10 +1,9 @@
 
 <template>
-  <View/>
+  <router-view></router-view>
 </template>
 
 <script setup lang="ts">
-import View from './views/index.vue';
 </script>
 
 <style scoped>
