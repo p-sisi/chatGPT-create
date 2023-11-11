@@ -93,10 +93,34 @@
             </el-tab-pane>
 
             <!-- 详细问题 -->
-            <el-drawer v-model="isDrawerOpen" >
+            <el-drawer v-model="isDrawerOpen" size="40%" show-close="false">
                 <template #header>
-                    <h4>{{drawerTitle}}</h4>
+                    <div>{{ drawerTitle }}</div>
                 </template>
+                <div v-for="item in getQuestionList(drawerTitle)" :key="item.id">
+                    <el-card 
+                        class="qaList-card"
+                        
+                        > 
+                        <div class="list-title">
+                            {{ item.question }}
+                        </div>
+                        <div class="list-answer">
+                            {{ item.answer }}
+                        </div>    
+                    </el-card>
+                    <div class="list-icon">
+                        {{ item.isFavorite }}
+                        <div v-show="item.isFavorite == 'false'">
+                            <el-icon class="list-icon-star" ><Star/></el-icon>
+                        </div>
+                        <div v-show="item.isFavorite == 'true'">
+                            <el-icon class="list-icon-star" v-if="item.isFavorite == 'true'" ><StarFilled/></el-icon>
+                        </div>
+                        <el-divider direction="vertical" class="list-icon-divider"/>
+                        <el-icon class="list-icon-edit"><Edit /></el-icon>
+                    </div>
+                </div>
             </el-drawer>
         </el-tabs>
     </div>
@@ -104,8 +128,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Delete, DocumentCopy } from '@element-plus/icons-vue'
-import {  QUESTION_ANSWER_DATA,COLLECT_DATA } from '@/content/index.ts';
+import { Delete, DocumentCopy, Star, Edit, StarFilled } from '@element-plus/icons-vue'
+import { QUESTION_ANSWER_DATA, COLLECT_DATA  } from '@/content/index.ts';
 import { ElMessage } from 'element-plus';
 
 //tab 切换
@@ -137,6 +161,11 @@ const drawerTitle = ref('');
 const handleOpenDrawer = (item: Object) => {
     isDrawerOpen.value = true;
     drawerTitle.value = item.type;
+}
+
+//问题列表
+const getQuestionList = (type: string) => { 
+    return QUESTION_ANSWER_DATA.filter((item: any) => item.type === type)[0].qa;
 }
 </script>
 
@@ -224,6 +253,34 @@ const handleOpenDrawer = (item: Object) => {
         }
     }
 }
+
+.qaList-card {
+    position: relative;
+    .list-title {
+        border-bottom: solid 1px #e6e6e6;
+        padding-bottom: 16px;
+    }
+    .list-answer {
+        padding-top: 10px;
+    }
+}
+.list-icon {
+    margin: 6px 10px;
+    height: 24px;
+    cursor: pointer;
+    .list-icon-star {
+        float: right;
+        right: 10px;
+    }
+    .list-icon-divider {
+        float: right;
+        right: 10px;
+    }
+    .list-icon-edit {
+        float: right;
+        right: 10px;
+    }
+}
 :deep(.el-tabs__active-bar ) {
     height: 4px;
     background-color:#351c75
@@ -235,5 +292,13 @@ const handleOpenDrawer = (item: Object) => {
 :deep(.el-empty__description p) {
     font-size: 20px;
     color: #351c75;
+}
+:deep(.el-drawer__header ) {
+    margin-bottom: 0px;
+    padding: 10px 0px 8px 16px;
+    background-color: #351c75;
+    font-size: 24px;
+    color: #e69138;
+    font-weight: bold;
 }
 </style>
