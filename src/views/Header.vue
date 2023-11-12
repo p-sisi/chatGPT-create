@@ -3,7 +3,7 @@
         <div class="header-container-title">
             面向对象课程学习助手
             <div >
-                <el-button size="large" plain color="#4840ba" style="--el-button-bg-color: #f6e9e1;">Sign up</el-button>
+                <el-button size="large" plain color="#4840ba" style="--el-button-bg-color: #f6e9e1;" @click="handleLoginOpen">Sign up</el-button>
                 <el-button size="large" type="primary" color="#4840ba">Log in</el-button>
             </div>
 
@@ -22,17 +22,53 @@
             </div>
         </div>
 
+        <!-- 登录弹窗 -->
+        <el-dialog
+            v-model="loginDialogVisible"
+            title="用户登录"
+            width="30%"
+        >
+            <div>用户账号：</div>
+            <el-input v-model="userCount" placeholder="请输入用户账号" />
+            <div>用户密码：</div>
+            <el-input v-model="userPassword" placeholder="请输入用户密码" />
+            <template #footer>
+            <span class="dialog-footer">
+                <el-button @click="loginDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="handleLoginIn">登录</el-button>
+            </span>
+            </template>
+        </el-dialog>
 
     </div>
 </template>
 
 <script setup lang="ts">
+import { fetchLoginIn } from '@/apis';
+import { ref } from 'vue';
 import router from '@/router/index.ts';
 
 const handleCreate = () => {
     router.push('/ai-create');
 }
 
+//登录
+const loginDialogVisible = ref(false);
+const userCount = ref('');
+const userPassword = ref('');
+
+const handleLoginOpen = () => {
+    loginDialogVisible.value = true;
+}
+
+const handleLoginIn = async () => {
+    const params = {
+        username: userCount.value,
+        password: userPassword.value
+    }
+    const res = await fetchLoginIn(params);
+    console.log(res);
+}
 </script>
 
 <style lang="scss" scoped>

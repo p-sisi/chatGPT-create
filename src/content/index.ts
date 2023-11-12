@@ -1,6 +1,7 @@
 //问答列表数据类型
 export const QUESTION_ANSWER_DATA = [
     {
+        typeId: 1,
         type: '面向对象基础',
         qa: [
             {
@@ -18,17 +19,20 @@ export const QUESTION_ANSWER_DATA = [
         ]
     },
     {
+        typeId: 2,
         type: '类设计和建模',
         qa: [
             {
+                id:3,
                 question: '介绍UML图表，如类图、时序图、用例图等，以用于类设计和建模。',
                 answer: '333333',
-                isFavorite: false,
+                isFavorite: true,
             },
             {
+                id: 4,
                 question: '讨论类设计原则，如单一职责原则、开闭原则等。',
                 answer: '444444',
-                isFavorite: true,
+                isFavorite: false,
             }
         ]
     }

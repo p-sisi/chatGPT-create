@@ -111,12 +111,10 @@
                     </el-card>
                     <div class="list-icon">
                         {{ item.isFavorite }}
-                        <div v-show="item.isFavorite == 'false'">
+            
                             <el-icon class="list-icon-star" ><Star/></el-icon>
-                        </div>
-                        <div v-show="item.isFavorite == 'true'">
-                            <el-icon class="list-icon-star" v-if="item.isFavorite == 'true'" ><StarFilled/></el-icon>
-                        </div>
+                            <i class="iconfont icon-icon-uncollect"></i>
+                            <el-icon class="list-icon-star"><StarFilled/></el-icon>
                         <el-divider direction="vertical" class="list-icon-divider"/>
                         <el-icon class="list-icon-edit"><Edit /></el-icon>
                     </div>
