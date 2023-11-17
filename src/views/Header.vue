@@ -47,7 +47,7 @@
 
         <!-- 登录弹窗 -->
         <el-dialog
-            v-model="loginDialogVisible"
+            v-model="commonStore.isLoginDialogOpen"
             width="50%"
         >
             <div class="login-dialog">
@@ -149,6 +149,10 @@ import router from '@/router/index.ts';
 import { ElMessage } from 'element-plus';
 import { ArrowDown } from '@element-plus/icons-vue';
 import { isKeyInSessionStorage, debounce } from '@/until';
+import { useCommonStore } from '@/store';
+
+const commonStore = useCommonStore();
+console.log('store',commonStore.isLoginDialogOpen);
 
 const isLogin = ref(false);
 
@@ -163,13 +167,12 @@ const handleCreate = () => {
 const userName = ref('');
 
 //登录
-const loginDialogVisible = ref(false);
 const userCount = ref('');
 const userPassword = ref('');
 const isCheck = ref(true);
 
 const handleLoginOpen = () => {
-    loginDialogVisible.value = true;
+    commonStore.setLoginDialogOpen(true);
     isActiveLogin.value = false;
     isActiveSign.value = true;
 }
@@ -187,7 +190,7 @@ const handleLoginIn = async () => {
         userName.value = result.data.userInfo.nickname;
         sessionStorage.setItem('AI-token', result.data.token);
         ElMessage.success('登录成功！');
-        loginDialogVisible.value = false;
+        commonStore.setLoginDialogOpen(false);
         userCount.value = '';
         userPassword.value = '';
 
@@ -198,7 +201,7 @@ const handleLoginIn = async () => {
 }
 
 const cancelLogin = () => {
-    loginDialogVisible.value = false;
+    commonStore.setLoginDialogOpen(false);
     ElMessage.warning('无法使用收藏功能、提问ChatGPT功能')
 }
 
@@ -219,7 +222,7 @@ const newUserPassword1 = ref('');
 const newUserPassword2 = ref('');
 
 const handleSignOpen = () => {
-    loginDialogVisible.value = true;
+    commonStore.setLoginDialogOpen(true);
     isActiveSign.value = false;
     isActiveLogin.value = true;
 }
@@ -236,7 +239,7 @@ const handleSign = async () => {
         }
         await fetchSignIn(params);
         ElMessage.success('注册成功！');
-        loginDialogVisible.value = false;
+        commonStore.setLoginDialogOpen(false);
         newUserCount.value = '';
         newUserPassword1.value = '';
         newUserPassword2.value = '';

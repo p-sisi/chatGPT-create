@@ -6,7 +6,7 @@
                 <div class="qa-card-container">
                     <div 
                         class="qa-card"
-                        v-for="item in QUESTION_ANSWER_DATA"
+                        v-for="item in listData"
                         :key="item.type">
                             <div class="card-type" @click="handleOpenDrawer(item)">{{ item.type }}</div>
                     </div>
@@ -93,15 +93,12 @@
             </el-tab-pane>
 
             <!-- 详细问题 -->
-            <el-drawer v-model="isDrawerOpen" size="40%" show-close="false">
+            <el-drawer v-model="isDrawerOpen" size="80%" show-close="false">
                 <template #header>
                     <div>{{ drawerTitle }}</div>
                 </template>
-                <div v-for="item in getQuestionList(drawerTitle)" :key="item.id">
-                    <el-card 
-                        class="qaList-card"
-                        
-                        > 
+                <div v-for="item in getQuestionList(drawerTitle)" :key="item.dialogID">
+                    <el-card class="qaList-card"> 
                         <div class="list-title">
                             {{ item.question }}
                         </div>
@@ -110,13 +107,16 @@
                         </div>    
                     </el-card>
                     <div class="list-icon">
-                        {{ item.isFavorite }}
-            
-                            <el-icon class="list-icon-star" ><Star/></el-icon>
-                            <i class="iconfont icon-icon-uncollect"></i>
-                            <el-icon class="list-icon-star"><StarFilled/></el-icon>
-                        <el-divider direction="vertical" class="list-icon-divider"/>
-                        <el-icon class="list-icon-edit"><Edit /></el-icon>
+                        <div v-if="item.collect">
+                            <el-tooltip content="取消收藏" placement="bottom" effect="light" >
+                                <i class=" iconfont list-icon-collect icon-shoucang-copy" @click="handleCollect(item)"></i>
+                            </el-tooltip>
+                        </div>
+                        <div v-else>
+                            <el-tooltip content="收藏" placement="bottom" effect="light" >
+                                <i class="iconfont icon-icon-uncollect list-icon-unCollect"  @click="handleCollect(item)"></i>
+                            </el-tooltip>
+                        </div>
                     </div>
                 </div>
             </el-drawer>
@@ -125,10 +125,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Delete, DocumentCopy, Star, Edit, StarFilled } from '@element-plus/icons-vue'
-import { QUESTION_ANSWER_DATA, COLLECT_DATA  } from '@/content/index.ts';
+import { COLLECT_DATA, COLLECT_LOCATION } from '@/content/index.ts';
 import { ElMessage } from 'element-plus';
+import { fetchQuestionList, fetchCollect, fetchCancelCollect } from '@/apis';
+
+//问题列表
+const listData = ref([]);
+
+onMounted( async () => {
+    try {
+        const result = await fetchQuestionList();
+        listData.value = result.data;
+    } catch (error: any) {
+        console.log(error);
+    }
+})
 
 //tab 切换
 const activeTab = ref('问答列表');
@@ -163,7 +176,27 @@ const handleOpenDrawer = (item: Object) => {
 
 //问题列表
 const getQuestionList = (type: string) => { 
-    return QUESTION_ANSWER_DATA.filter((item: any) => item.type === type)[0].qa;
+    return listData.value.filter((item: any) => item.type === type)[0].questionAll;
+}
+
+//收藏
+const handleCollect = async (item: any) => {
+    try {
+        if(!item.collect) {
+            await fetchCollect(item.dialogId);
+            ElMessage.success('收藏成功！');
+        } else {
+            const params = {
+                dialogId: item.dialogId,
+                collectType: COLLECT_LOCATION.QUESTION_LIST
+            }
+            await fetchCancelCollect(params);
+            ElMessage.success('取消收藏成功！');
+        }
+        item.collect = !item.collect;
+    } catch (error: any) {
+        ElMessage.error(error.message);
+    }
 }
 </script>
 
@@ -201,7 +234,7 @@ const getQuestionList = (type: string) => {
         .card-type {
             font-size: 20px;
             text-align: center;
-            padding-top: 10px;
+            padding-top: 16px;
         }
     }
     .qa-card:hover {
@@ -257,26 +290,25 @@ const getQuestionList = (type: string) => {
     .list-title {
         border-bottom: solid 1px #e6e6e6;
         padding-bottom: 16px;
+        font-size: 18px;
+        font-weight: 600;
     }
     .list-answer {
         padding-top: 10px;
+        color: #7a8691;
     }
 }
 .list-icon {
     margin: 6px 10px;
+    padding-bottom: 4px;
     height: 24px;
     cursor: pointer;
-    .list-icon-star {
+    .list-icon-unCollect {
         float: right;
-        right: 10px;
     }
-    .list-icon-divider {
+    .list-icon-collect {
         float: right;
-        right: 10px;
-    }
-    .list-icon-edit {
-        float: right;
-        right: 10px;
+        color: #e69138;
     }
 }
 :deep(.el-tabs__active-bar ) {

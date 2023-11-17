@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AxiosRequestConfig, AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { ElMessage } from 'element-plus';
 
 const COMMON_REQUEST_METHOD = 'POST'; //缺省请求方法
 const DEFAULT_TIMEOUT = 120000; //缺省请求超时时间 2min
@@ -31,9 +32,12 @@ export class CustomAxiosInstance {
             async (config: InternalAxiosRequestConfig) => {
                 // 每次发送请求之前判断是否存在token，如果存在，则统一在http请求的header都加上token，不用每次请求都手动添加了
                 // 即使本地存在token，也有可能token是过期的，所以在响应拦截器中要对返回状态进行判断
-                const token = localStorage.getItem('Token')
+                const token = sessionStorage.getItem('AI-token');
                 //检查是否成功获取到 token，如果存在，则将它添加到请求的 headers 中的 Authorization 字段。这是一种在每个请求中添加 token 的方式，用于身份验证。
                 token && (config.headers.Authorization = token)
+                if( token !== null ) {
+                    config.headers.Authorization = token;
+                }
                 if(config.method.toUpperCase() === 'POST') {
                     config.headers['Content-Type'] = 'application/json;charset=utf-8'
                 }
@@ -68,6 +72,10 @@ export class CustomAxiosInstance {
 
                 if (error.code === 'ERR_NETWORK') {
                     console.log('网络异常, 请检查网络');
+                }
+
+                if(error.response?.status === 401) {
+                    ElMessage.error('登录已过期或未登录，请登录后重试！');
                 }
                 console.log('response interceptor error', error);
                 //请求发送失败，请求没法送到数据库中
