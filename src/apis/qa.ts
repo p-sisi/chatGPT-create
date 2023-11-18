@@ -14,8 +14,15 @@ export function fetchCollect(id: number) {
     return request.get(`/collect/addSys?dialogId=${id}`);
 }
 
-/**取消收藏
+/**
+ * 取消收藏
  */
 export function fetchCancelCollect(params: number) {
     return request.get(`/collect/delete`,params);
+}
+
+/**收藏列表
+ */
+export function fetchCollectList() {
+    return request.get(`/collect/getAll`);
 }

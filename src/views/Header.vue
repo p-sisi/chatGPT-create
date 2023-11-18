@@ -10,7 +10,7 @@
             <div style="margin-right: 10px;" v-else class="image-menu">
                 <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
                 <div style="font-size: 17px;padding-top: 5px;margin-left: 6px;">
-                    {{ userName }}
+                    {{ commonStore.userName }}
                 </div>
                 <div style="padding-top: 10px;padding-left: 10px;">
                     <el-dropdown>
@@ -143,7 +143,7 @@
 </template>
 
 <script setup lang="ts">
-import { fetchLoginIn, fetchSignIn, fetchResetPassword } from '@/apis';
+import { fetchLoginIn, fetchSignIn, fetchResetPassword, fetchCollectList } from '@/apis';
 import { ref, onMounted } from 'vue';
 import router from '@/router/index.ts';
 import { ElMessage } from 'element-plus';
@@ -152,7 +152,6 @@ import { isKeyInSessionStorage, debounce } from '@/until';
 import { useCommonStore } from '@/store';
 
 const commonStore = useCommonStore();
-console.log('store',commonStore.isLoginDialogOpen);
 
 const isLogin = ref(false);
 
@@ -164,7 +163,6 @@ const handleCreate = () => {
     router.push('/ai-create');
 }
 
-const userName = ref('');
 
 //登录
 const userCount = ref('');
@@ -186,8 +184,9 @@ const handleLoginIn = async () => {
             username: userCount.value,
             password: userPassword.value
         }
+        debugger
         const result = await fetchLoginIn(params);
-        userName.value = result.data.userInfo.nickname;
+        commonStore.setUserName(result.data.userInfo.nickname)
         sessionStorage.setItem('AI-token', result.data.token);
         ElMessage.success('登录成功！');
         commonStore.setLoginDialogOpen(false);
@@ -195,6 +194,9 @@ const handleLoginIn = async () => {
         userPassword.value = '';
 
         isLogin.value = isKeyInSessionStorage('AI-token');
+
+        const collectResult = await fetchCollectList();
+        commonStore.setCollectList(collectResult.data);
     } catch(err: any) {
         ElMessage.error(err);
     }

@@ -7,7 +7,7 @@ export default defineConfig(() => {
       port: 8989,
       open: true,
       proxy: {
-          '^(/collect|/sysDialog|/user)': {
+          '^(/collect|/sysDialog|/user|/chat)': {
               target: 'http://10.33.102.11:8081/',
               changeOrigin: true,
           }

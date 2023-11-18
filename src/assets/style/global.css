@@ -27,7 +27,6 @@ body {
   display: flex;
   margin: 0px;
   min-width: 320px;
-  height: 200vh;
   background-color: #f6e9e1;
 }
 
@@ -61,6 +60,7 @@ button:focus-visible {
 
 #app {
   padding: 0px;
+  width: 100%;
 }
 
 @media (prefers-color-scheme: light) {

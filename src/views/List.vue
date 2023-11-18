@@ -15,16 +15,29 @@
 
             <!-- 我的收藏 -->
             <el-tab-pane label="我的收藏" name="我的收藏">
-                <div class="collect">
-                    <div class="collect-empty" v-if="COLLECT_DATA.length == 0">
-                        <el-empty description="暂无相关收藏，请点击[提问ChatGPT]按钮或者前往”问答列表“中收藏问答" />
+                <el-scrollbar height="500px">
+                    <div class="collect">
+                    <div class="tabs-change">
+                        <div 
+                            v-for="item in COLLECT_TYPE" 
+                            :key="item.key"  
+                            @click="radioChange(item)" 
+                            class="tabs-temp" 
+                            :class="{ 'selected': item.label === activeCollectRadio }"
+                            >
+                                <span>{{ item.label }}</span>
+                        </div>
+                    </div>
+
+                    <div class="collect-empty" v-if="commonStore.collectList.length == 0">
+                        <el-empty description="暂无相关收藏" />
                     </div>
 
                     <div class="collect-container" v-else>
                         <el-card
                             class="collect-card"
-                            v-for="item in COLLECT_DATA"
-                            :key="item.question"
+                            v-for="item in commonStore.collectList"
+                            :key="item.dialogId"
                             shadow="hover">
 
                             <!-- 头部 -->
@@ -46,7 +59,7 @@
                             <div class="collect-card-footer">
                                 <span class="text">共 &nbsp;{{ item.answer.length }}&nbsp;字</span>
                                 <span style="margin: 0px 8px; color: #ececec;">|</span>
-                                <span >{{ item.created_time }}</span>
+                                <span >{{ item.collectTime }}</span>
 
                                 <div v-show="true" class="footer_icon" >
 
@@ -70,7 +83,7 @@
                                         title="确认删除该收藏?"
                                         hide-icon
                                         :teleported = true
-                                        @confirm.stop="handleDelete(item)"
+                                        @confirm.stop="handleDeleteCollectList(item)"
                                     >
                                         <template #reference>
                                         <div style="float: right;">
@@ -80,7 +93,7 @@
                                             content="删除"
                                             placement="bottom"
                                             >  
-                                                <el-icon style="margin-top: 4px;"><Delete /></el-icon>
+                                                <el-icon style="margin-top: 4px;" ><Delete /></el-icon>
                                             </el-tooltip>
                                         </div>
                                         </template>
@@ -90,6 +103,8 @@
                         </el-card>
                     </div>
                 </div>
+                </el-scrollbar>
+
             </el-tab-pane>
 
             <!-- 详细问题 -->
@@ -126,27 +141,53 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { Delete, DocumentCopy, Star, Edit, StarFilled } from '@element-plus/icons-vue'
-import { COLLECT_DATA, COLLECT_LOCATION } from '@/content/index.ts';
+import { Delete, DocumentCopy } from '@element-plus/icons-vue'
+import { COLLECT_LOCATION, COLLECT_TYPE } from '@/content/index.ts';
 import { ElMessage } from 'element-plus';
-import { fetchQuestionList, fetchCollect, fetchCancelCollect } from '@/apis';
+import { fetchQuestionList, fetchCollect, fetchCancelCollect, fetchCollectList } from '@/apis';
+import { useCommonStore } from '@/store';
+
+const commonStore = useCommonStore();
 
 //问题列表
 const listData = ref([]);
-
+const collectData = ref([]);
 onMounted( async () => {
     try {
         const result = await fetchQuestionList();
         listData.value = result.data;
+        const collectResult = await fetchCollectList();
+        collectData.value = collectResult.data;
+        commonStore.setCollectList(collectResult.data);
     } catch (error: any) {
         console.log(error);
     }
 })
 
+//收藏类别
+const activeCollectRadio = ref('全部') //默认选中
+const radioChange = (item: any) => {
+    if (activeCollectRadio.value === item.label )  return
+
+    activeCollectRadio.value = item.label;
+    commonStore.collectList = collectData.value;
+    if(activeCollectRadio.value === '全部') return;
+
+    commonStore.collectList = commonStore.collectList.filter((obj: any) => obj.collectType === item.type);
+}
+
 //tab 切换
 const activeTab = ref('问答列表');
-const handleClick = () => {
-    console.log('activeTab',activeTab.value)
+const handleClick = async (e) => {
+    if(e.props.label == '我的收藏') {
+        try {
+            const collectResult = await fetchCollectList();
+            collectData.value = collectResult.data;
+            commonStore.setCollectList(collectResult.data);
+        } catch (error: any) {
+            ElMessage.error(error.message)
+        }
+    }
 }
 
 //复制
@@ -156,13 +197,24 @@ const handleCopy = (text:string) => {
     navigator.clipboard.writeText(content).then(() => {
         ElMessage.success('复制成功')
     }).catch(() => {
-        ElMessage.error('复制失败，请稍后再试!')
+        ElMessage.error('复制失败，请稍后再试!');
     })
 }
 
 //删除
-const handleDelete = async (item:any) => {
-    console.log('删除',item);
+const handleDeleteCollectList = async (item:any) => {
+    try {
+        const params = {
+            dialogId: item.dialogId,
+            collectType: item.collectType,
+        }
+        await fetchCancelCollect(params);
+        ElMessage.success('删除成功！');
+        commonStore.deleteCollect(item.dialogId);
+        collectData.value = commonStore.collectList;
+    } catch (error: any) {
+        ElMessage.error('删除失败！请刷新重试');
+    }
 }
 
 //drawer
@@ -246,7 +298,6 @@ const handleCollect = async (item: any) => {
 .collect {
     overflow: hidden;
     .collect-empty {
-        display: flex;
         flex-wrap: wrap;
         margin: 0 auto;
     }
@@ -308,6 +359,28 @@ const handleCollect = async (item: any) => {
     }
     .list-icon-collect {
         float: right;
+        color: #e69138;
+    }
+}
+
+//样式
+.tabs-change {
+    display: flex;   //flex布局，横向排列
+    flex-direction: row;
+    .tabs-temp {    //未选中时按钮样式
+        height: 32px;
+        padding: 4px 30px;
+        margin-right: 8px;
+        margin-bottom: 24px;
+        border-radius: 4px;
+        background: #c4bed3;
+        font-size: 18px;
+        color: black;
+        line-height: 32px;
+        cursor: pointer;
+    }
+    .tabs-temp.selected {     //选中时的样式
+        background: #351c75;
         color: #e69138;
     }
 }

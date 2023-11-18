@@ -1,29 +1,62 @@
-//收藏列表，数据类型
-export const COLLECT_DATA = [{
-        id: 1,
-        question: '介绍什么是类和对象，如何创建和使用它们。',
-        answer: '1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111',
-        created_time: '2023-10-11 11:11',
+//收藏类型
+export const COLLECT_TYPE = [
+    {
+        key: 0,
+        label: '全部',
+        type: 'all',
+    },
+    {
+        key: 1,
+        label: 'ChatGPT',
+        type: 'chat'
+    },
+    {
+        key: 2,
+        label: '问答列表',
+        type:'system'
+    },
+    {
+        key: 3,
+        label: '自定义',
+        type: 'self'
+    }
+];
+
+//对话数据结构
+export const CHAT = [    //id query,其他body
+    {
+        id: 1,     //参数
+        title: '什么是基本概念',
+        history: [      //参数
+            {
+                id: 1,
+                question: '11111',  
+                answer: '11111',    
+                collect: false,
+            },
+            {
+                id: 2,
+                question: '22222',
+                answer: '22222',
+                collect: false,
+            }
+        ]
     },
     {
         id: 2,
-        question: '介绍什么是类和对象，如何创建和使用它们。',
-        answer: '222222',
-        created_time: '2023-10-11 11:11',
-    },
-    {
-        id: 3,
-        question: '介绍什么是类和对象',
-        answer: '333333',
-        created_time: '2023-10-11 11:11',
+        title: '面向对象编程思想',
+        history: [
+            {
+                id: 3,
+                question: '33333',
+                answer: '33333',
+                collect: false,
+            }
+        ]
     }
 ]
 
-//用户登录信息数据类型
-export const COUNT = {
-    password: '111111',
-    username: 'name',
-}
+
 
 //取消收藏位置类型
 export const COLLECT_LOCATION = {

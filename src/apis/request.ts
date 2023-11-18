@@ -1,6 +1,9 @@
 import axios from 'axios';
 import type { AxiosRequestConfig, AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { ElMessage } from 'element-plus';
+import { useCommonStore } from '@/store';
+
+const commonStore = useCommonStore();
 
 const COMMON_REQUEST_METHOD = 'POST'; //缺省请求方法
 const DEFAULT_TIMEOUT = 120000; //缺省请求超时时间 2min
@@ -76,6 +79,7 @@ export class CustomAxiosInstance {
 
                 if(error.response?.status === 401) {
                     ElMessage.error('登录已过期或未登录，请登录后重试！');
+                    commonStore.setLoginDialogOpen(true);
                 }
                 console.log('response interceptor error', error);
                 //请求发送失败，请求没法送到数据库中
