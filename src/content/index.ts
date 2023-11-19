@@ -15,11 +15,6 @@ export const COLLECT_TYPE = [
         label: '问答列表',
         type:'system'
     },
-    {
-        key: 3,
-        label: '自定义',
-        type: 'self'
-    }
 ];
 
 //对话数据结构

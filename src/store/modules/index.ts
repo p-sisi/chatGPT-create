@@ -7,6 +7,7 @@ interface commonData {
     chatList: any;       //对话列表
     chatHistory: any;   //聊天历史记录
     activeTypeText: string;  //完成打字的文本
+    selfQuestionList: any;   //自问自答列表
 }
 
 export const useCommonStore = defineStore('commonState', {
@@ -17,6 +18,7 @@ export const useCommonStore = defineStore('commonState', {
         chatList: [],
         chatHistory: [],
         activeTypeText: '',
+        selfQuestionList: [],
     }),
     actions: {
         setLoginDialogOpen(isOpen: boolean) {
@@ -76,6 +78,24 @@ export const useCommonStore = defineStore('commonState', {
         },
         setActiveTypeText(text: string) {
             this.activeTypeText = text;
+        },
+        setSelfQuestionList(list: any[]) {
+            this.selfQuestionList = list
+        },
+        addSelfQuestionList(chat: object) {
+            this.selfQuestionList.push(chat);
+        },
+        deleteSelfQuestionList(id: number) { //未完成
+            const List = this.selfQuestionList;
+            const index = List.findIndex((item: any) => item.id === id);
+            List.splice(index, 1);
+            this.selfQuestionList = List;
+        },
+        updateSelfQuestionList(id: number,chat: object) {
+            const List = this.selfQuestionList;
+            const index = List.findIndex((item: any) => item.id === id);
+            List[index] = chat;
+            this.selfQuestionList = List;
         },
     },
     persist: [
