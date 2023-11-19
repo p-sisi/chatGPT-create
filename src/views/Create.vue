@@ -36,46 +36,78 @@
             <!-- 右边 -->
                 <div class="container-right">
                     <el-scrollbar height="600px">
-                    <div class="empty-img" v-show="isEmptyChat">
-                        <img src="../assets/image/empty-create.jpg" alt="">
-                    </div>  
+                        <div class="empty-img" v-show="isEmptyChat">
+                            <img src="../assets/image/empty-create.jpg" alt="">
+                        </div>  
 
-                    <div 
-                        class="no-empty"
-                        v-for="item in history"
-                        :key="item.dialogId"
-                        >
-                        <div class="chat-right">
-                            <div class="chat-right-user">
-                                <div class="chat-question">{{ item.question }}</div>
-                                <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
-                            </div> 
-                        </div>
-                        <div class="chat-left">
-                            <el-avatar> Chat </el-avatar>
-                            <div class="chat-answer">{{ item.answer }}</div>        
-                        </div>
-                        <div class="chat-collect">
-                            <div v-if="!item.collect">
-                                <el-tooltip content="收藏" placement="bottom" effect="light" >
-                                    <i class="iconfont icon-icon-uncollect "  @click="handleCollect(item)" style="color: #63717e;cursor: pointer;" ></i>
+                        <div 
+                            class="no-empty"
+                            v-for="item in history"
+                            :key="item.dialogId"
+                            >
+                            <div class="chat-right">
+                                <div class="chat-right-user">
+                                    <div class="chat-question">{{ item.question }}</div>
+                                    <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
+                                </div> 
+                            </div>
+                            <div class="chat-left">
+                                <el-avatar> Chat </el-avatar>
+                                <div class="chat-answer">{{ item.answer }}</div>        
+                            </div>
+                            <div class="chat-collect">
+                                <div v-if="!item.collect">
+                                    <el-tooltip content="收藏" placement="bottom" effect="light" >
+                                        <i class="iconfont icon-icon-uncollect "  @click="handleCollectOpen(item)" style="color: #63717e;cursor: pointer;" ></i>
+                                    </el-tooltip>
+                                </div>
+                                <div v-else>
+                                    <el-tooltip content="取消收藏" placement="bottom" effect="light" >
+                                        <i class=" iconfont list-icon-collect icon-shoucang-copy" style="color: #f3b78d;cursor: pointer;" @click="handleCancelCollect(item)"></i>
+                                    </el-tooltip>
+                                </div>
+                                <el-divider direction="vertical" style="position: absolute;left: 14px;bottom: 4px"/>
+                                <el-tooltip content="复制" placement="bottom" effect="light" >
+                                    <el-icon color="#63717e" style="position: absolute;left: 30px;bottom:4px"  @click="handleCopy(item.answer)"><DocumentCopy /></el-icon>
                                 </el-tooltip>
                             </div>
-                            <div v-else>
-                                <el-tooltip content="取消收藏" placement="bottom" effect="light" >
-                                    <i class=" iconfont list-icon-collect icon-shoucang-copy" style="color: #f3b78d;cursor: pointer;" @click="handleCancelCollect(item)"></i>
-                                </el-tooltip>
-                            </div>
-                            <el-divider direction="vertical" style="position: absolute;left: 14px;bottom: 4px"/>
-                            <el-tooltip content="复制" placement="bottom" effect="light" >
-                                <el-icon color="#63717e" style="position: absolute;left: 30px;bottom:4px"  @click="handleCopy(item.answer)"><DocumentCopy /></el-icon>
-                            </el-tooltip>
                         </div>
-                    </div>
+
+                        <!-- 生成状态卡片 -->
+                        <div v-show=" isCreating ">
+                            <div class="empty-img" v-show="isEmptyChat">
+                                <img src="../assets/image/empty-create.jpg" alt="">
+                            </div>
+
+                            <div class="no-empty">
+                                <div class="chat-right">
+                                    <div class="chat-right-user">
+                                        <div class="chat-question">{{ newChatData.question }}</div>
+                                        <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
+                                    </div> 
+                                </div>
+                                <div class="chat-left">
+                                    <el-avatar> Chat </el-avatar>
+                                    <div
+                                        :class="{ 'active-chat-answer': isCreating ,'chat-answer': !isCreating}"
+                                    >
+                                        <el-skeleton :rows="3" animated v-if="isCreating"/>
+                                        <el-input
+                                            v-else
+                                            ref="generateResultInput"
+                                            v-model="generateResult"
+                                            class="generate-result-input"
+                                            autosize
+                                            type="textarea"
+                                            resize="none"
+                                        />
+                                    </div>        
+                                </div>
+                            </div>
+                        </div>
                     </el-scrollbar>
 
-
-
+                    <!-- input问答框 -->
                     <div class="relative">
                         <div class="chat-input">
                             <el-input 
@@ -83,6 +115,7 @@
                                 placeholder="Please input question" 
                                 :autosize="{ minRows: 1, maxRows: 4 }"
                                 type="textarea"
+                                @keyup.enter="handleEnterKeyChat"
                             />
                         </div>
                     </div>
@@ -103,12 +136,36 @@
 
         <!-- 新建对话 -->
         <el-dialog v-model="newChatDialog" title="新建对话" width="30%">
-            <el-input v-model="newChatTitle" placeholder="请输入新对话标题" />
+            <el-input v-model="newChatTitle" placeholder="请输入新对话标题" clearable />
             <template #footer>
                 <span class="dialog-footer">
                     <el-button @click="newChatDialog = false">取消</el-button>
                     <el-button type="primary" @click="handleNewChat">
                     新建
+                    </el-button>
+                </span>
+            </template>
+        </el-dialog>
+
+        <!-- 新建收藏 -->
+        <el-dialog v-model="CollectTitleDialog" title="加入收藏" width="40%">
+            <el-form >
+                <el-form-item label="问题：" label-width="80px">
+                    <el-input v-model="newCollectTitle" placeholder="请输入收藏的问题" clearable />
+                </el-form-item>
+                <el-form-item label="答案：" label-width="80px">
+                    <el-input 
+                        v-model="newCollectAnswer" 
+                        placeholder="请输入收藏内容" 
+                        type="textarea"
+                        :rows="5"/>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="CollectTitleDialog = false">取消</el-button>
+                    <el-button type="primary" @click="handleCollect()">
+                    收藏
                     </el-button>
                 </span>
             </template>
@@ -119,9 +176,16 @@
 <script setup lang="ts">
 import { EditPen, Delete, MoreFilled, Plus, DocumentCopy} from '@element-plus/icons-vue';
 import { useCommonStore } from '@/store';
-import { ref, onMounted, computed } from 'vue';
-import { fetchChatList, fetchDeleteChat, fetchEditChatTitle, fetchNewChat } from '@/apis';
+import { ref, onMounted, computed, reactive, nextTick } from 'vue';
+import { fetchChatList,
+        fetchDeleteChat, 
+        fetchEditChatTitle, 
+        fetchNewChat, 
+        fetchCollectChat,
+        fetchCancelCollectChat,
+        fetchChat } from '@/apis';
 import { ElMessage } from 'element-plus';
+import { COLLECT_TYPE } from '@/content';
 
 
 const commonStore = useCommonStore();
@@ -139,10 +203,14 @@ onMounted( async () => {
 
 //点击标题
 const history = ref([]);
+const chatItemId = ref();
+
 const clickChat = (item: any) => {
     console.log('item',item)
     commonStore.getChatHistory(item.chatId);
     history.value = commonStore.chatHistory;
+    chatItemId.value = item.chatId;
+    console.log('chatItemId',chatItemId.value)
     console.log('history',history.value)
 }
 
@@ -208,6 +276,70 @@ const handleNewChat = async () => {
 
 //提问
 const inputQuestion = ref('');
+const isTyping = ref(false);
+const isCreating = ref(false);
+let newChatData = reactive({
+    dialogId: 0,
+    question: '',
+    answer: '',
+    collect: false,
+});
+
+let resultData = ref();
+const handleEnterKeyChat = async () => {
+    if (inputQuestion.value) {
+        isCreating.value = true;
+        newChatData.question = inputQuestion.value;
+        inputQuestion.value = '';
+        
+        try {
+            await fetchChat(chatItemId.value,commonStore.chatHistory).then((result: any) => {
+                console.log('请求结果',result)
+                resultData.value = result.data;
+                commonStore.addChatHistory(newChatData);
+                commonStore.changeChatHistory(resultData.value);
+                console.log('历史记录',commonStore.chatHistory);
+
+            })
+
+
+            const typeText = resultData.value.answer;
+            await nextTick();
+            let scrollEl: HTMLElement | null = null;
+            isTyping.value = true;
+
+            let i = 0;
+            const timer = setInterval(async () => {
+                commonStore.setActiveTypeText(commonStore.activeTypeText + typeText.charAt(i));
+                if (!scrollEl) {
+                    scrollEl = document.querySelector('.generate-result-input') as HTMLElement;
+                }
+                await nextTick();
+                if (scrollEl) {
+                    scrollEl.scrollTop = scrollEl.scrollHeight;
+                }
+                i++;
+                if (i > typeText.length) {
+                    isTyping.value = false;
+                    clearInterval(timer);
+                }
+                //50:打字速度
+            }, 50);
+                
+        } catch (error: any) {
+            isCreating.value = false;
+            inputQuestion.value = newChatData.question;
+            ElMessage.error('生成失败，请稍后再试！')
+        }
+    }
+}
+
+const generateResultInput = ref<HTMLElement | null>(null);
+
+const generateResult = computed({
+    get: () => commonStore.activeTypeText || '',
+    set: (value) => commonStore.setActiveTypeText(value)
+});
 
 //复制
 const handleCopy = (text:string) => {
@@ -220,12 +352,46 @@ const handleCopy = (text:string) => {
 }
 
 //收藏、取消收藏
-const handleCollect = (item: any) => {
+const CollectTitleDialog = ref(false);
+const newCollectTitle = ref('');
+const newCollectAnswer = ref('');
+const collectDataItem = ref();
 
+const handleCollectOpen = (item: any) => {
+    newCollectTitle.value = item.question;
+    newCollectAnswer.value = item.answer;
+    collectDataItem.value = item;
+    console.log(item)
+    CollectTitleDialog.value = true;
 }
 
-const handleCancelCollect = (item: any) =>{
-
+const handleCollect = async () => {
+    try {
+        const params = {
+            dialogId: collectDataItem.value.dialogId,
+            newAnswer: newCollectAnswer.value,
+            newQuestion: newCollectTitle.value
+        }
+        await fetchCollectChat(params);
+        ElMessage.success('收藏成功');
+        CollectTitleDialog.value = false;
+        commonStore.setChatCollect(collectDataItem.value.dialogId,true);
+    } catch (error:any) {
+        ElMessage.error(error.message);
+    }
+}
+const handleCancelCollect = async (item: any) =>{
+    try {
+        const params = {
+            dialogId: item.dialogId,
+            collectType: COLLECT_TYPE[1].type,
+        }
+        await fetchCancelCollectChat(params);
+        ElMessage.success('取消收藏成功');
+        commonStore.setChatCollect(item.dialogId,false);
+    } catch (error: any) {
+        ElMessage.error(error.message);
+    }
 }
 </script>
 
@@ -330,6 +496,13 @@ const handleCancelCollect = (item: any) =>{
                     background-color: #edebeb;
                     border-radius: 10px;
                 }
+                .active-chat-answer {
+                    width: 80%;
+                    padding: 10px;
+                    margin-left: 10px;
+                    background-color: #edebeb;
+                    border-radius: 10px;
+                }
             }
             .chat-collect {
                 position: absolute;
@@ -348,6 +521,20 @@ const handleCancelCollect = (item: any) =>{
         right: 200px;
         width: 50%;
         border-top: 1px solid #ccc; 
+    }
+}
+
+.generate-result-input {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    font-size: 14px;
+    line-height: 20px;
+    color: #333;
+    font-family: 'PingFang SC';
+    :deep(.el-textarea__inner) {
+        box-shadow: 0 0 0 0px;
+        padding:0px;
     }
 }
 

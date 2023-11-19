@@ -29,3 +29,25 @@ export function fetchEditChatTitle(params: object) {
 export function fetchNewChat(params: object) {
     return request.get(`/chat/newChat`, params);
 }
+
+/**
+ * 收藏对话
+ */
+export function fetchCollectChat(params: object) {
+    return request.post(`/collect/addHistory`, params);
+}
+
+
+/**
+ * 取消收藏对话
+ */
+export function fetchCancelCollectChat(params: object) {
+    return request.get(`/collect/delete`, params);
+}
+
+/**
+ * chat问答
+ */
+export function fetchChat(id:number,params: object) {
+    return request.post(`/chat/multipleChat?chatId=${id}`, params);
+}

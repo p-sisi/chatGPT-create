@@ -184,7 +184,6 @@ const handleLoginIn = async () => {
             username: userCount.value,
             password: userPassword.value
         }
-        debugger
         const result = await fetchLoginIn(params);
         commonStore.setUserName(result.data.userInfo.nickname)
         sessionStorage.setItem('AI-token', result.data.token);

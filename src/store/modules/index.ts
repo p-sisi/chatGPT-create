@@ -6,6 +6,7 @@ interface commonData {
     userName: string;   //用户昵称
     chatList: any;       //对话列表
     chatHistory: any;   //聊天历史记录
+    activeTypeText: string;  //完成打字的文本
 }
 
 export const useCommonStore = defineStore('commonState', {
@@ -15,6 +16,7 @@ export const useCommonStore = defineStore('commonState', {
         userName: '',
         chatList: [],
         chatHistory: [],
+        activeTypeText: '',
     }),
     actions: {
         setLoginDialogOpen(isOpen: boolean) {
@@ -59,7 +61,22 @@ export const useCommonStore = defineStore('commonState', {
             const List = this.chatList;
             const index = List.findIndex((item: any) => item.chatId === id);
             this.chatHistory = List[index].allDialogs
-        }
+        },
+        addChatHistory(chat: object) {
+            this.chatHistory.push(chat);
+        },
+        changeChatHistory(chat: object) {
+            this.chatHistory.splice(this.chatHistory.length - 1, 1, chat);
+        },
+        setChatCollect(id:number, collect: boolean) {
+            const List = this.chatHistory;
+            const index = List.findIndex((item: any) => item.dialogId === id);
+            List[index].collect = collect;
+            this.chatHistory = List;
+        },
+        setActiveTypeText(text: string) {
+            this.activeTypeText = text;
+        },
     },
     persist: [
         {

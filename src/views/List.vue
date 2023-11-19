@@ -211,7 +211,6 @@ const handleDeleteCollectList = async (item:any) => {
         await fetchCancelCollect(params);
         ElMessage.success('删除成功！');
         commonStore.deleteCollect(item.dialogId);
-        collectData.value = commonStore.collectList;
     } catch (error: any) {
         ElMessage.error('删除失败！请刷新重试');
     }
