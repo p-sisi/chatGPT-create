@@ -267,8 +267,9 @@ const handleNewChat = async () => {
         }
         const result = await fetchNewChat(params);
         newChatDialog.value = false;
+        chatItemId.value = result.data;
         ElMessage.success('新建成功');
-        commonStore.addChat(result.data,newChatTitle.value)
+        commonStore.addChat(result.data,newChatTitle.value);
     } catch (error: any) {
         ElMessage.error(error.message);
     }
@@ -287,8 +288,10 @@ let newChatData = reactive({
 
 let resultData = ref();
 const handleEnterKeyChat = async () => {
+    //TODO:生成结果状态没处理 
     if (inputQuestion.value) {
         isCreating.value = true;
+        commonStore.addChatHistory(newChatData);
         newChatData.question = inputQuestion.value;
         inputQuestion.value = '';
         
@@ -296,7 +299,6 @@ const handleEnterKeyChat = async () => {
             await fetchChat(chatItemId.value,commonStore.chatHistory).then((result: any) => {
                 console.log('请求结果',result)
                 resultData.value = result.data;
-                commonStore.addChatHistory(newChatData);
                 commonStore.changeChatHistory(resultData.value);
                 console.log('历史记录',commonStore.chatHistory);
 
@@ -324,7 +326,7 @@ const handleEnterKeyChat = async () => {
                     clearInterval(timer);
                 }
                 //50:打字速度
-            }, 50);
+            }, 100);
                 
         } catch (error: any) {
             isCreating.value = false;
