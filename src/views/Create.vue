@@ -97,7 +97,7 @@
                                 <!-- chatGPT -->
                                 <div class="chat-left">
                                     <el-avatar> Chat </el-avatar>
-                                    <div :class="{ 'active-chat-answer': isCreating ,'chat-answer': !isCreating}"
+                                    <div :class="{ 'active-chat-answer': isGenerating || isTyping,'chat-answer': !isGenerating}"
                                     >
                                         <el-skeleton :rows="3" animated v-if="isGenerating == true"/>
                                         <el-input
@@ -305,11 +305,7 @@ const activeQuestion = ref('');
 
 const handleEnterKeyChat = async () => { 
     if (inputQuestion.value) {
-        debugger
         generateStatus.value = CommonStatusEnums.PENDING;
-        console.log('开始提问');
-        // //开始创作，没有打字
-        // isCreating.value = true;
 
         activeQuestion.value = inputQuestion.value;
         commonStore.setNewChatCardQuestion(inputQuestion.value);
@@ -318,15 +314,12 @@ const handleEnterKeyChat = async () => {
         try {   
             const result = await fetchChat(chatItemId.value,commonStore.chatHistory.concat(commonStore.newChatCard));
 
-            //保存请求的新历史记录
             const newHistory = result.data;
-
             commonStore.setActiveTypeText('');
             const typeText = result.data.answer;
 
             await nextTick();
             let scrollEl: HTMLElement | null = null;
-            //开始打字
             isTyping.value = true;
 
             let i = 0;
@@ -344,12 +337,11 @@ const handleEnterKeyChat = async () => {
                     isTyping.value = false;
                     clearInterval(timer);
                     history.value = commonStore.chatHistory;
+                    commonStore.addChatHistory(newHistory);
                 }
                 //50:打字速度
             }, 50);
             generateStatus.value = CommonStatusEnums.SUCCESS;
-            //先执行这里再执行打字，所以会先出现一个card
-            commonStore.addChatHistory(newHistory);
         } catch (error: any) {
             isCreating.value = false;
             ElMessage.error('生成失败，请稍后再试！')
@@ -504,6 +496,7 @@ const handleCancelCollect = async (item: any) =>{
                     display: flex;
                     flex-direction: row;
                     justify-content: end;
+                    color: #333;
                     .chat-question {
                         max-width: 80%;
                         padding: 10px;
@@ -518,6 +511,7 @@ const handleCancelCollect = async (item: any) =>{
                 display: flex;
                 flex-direction: row;
                 margin-bottom: 10px;
+                color: #333;
                 .chat-answer {
                     max-width: 80%;
                     padding: 10px;
@@ -557,14 +551,19 @@ const handleCancelCollect = async (item: any) =>{
     display: block;
     box-sizing: border-box;
     width: 100%;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 20px;
     color: #333;
     font-family: 'PingFang SC';
+    background-color: #edebeb;
     :deep(.el-textarea__inner) {
         box-shadow: 0 0 0 0px;
         padding:0px;
+        background-color: #edebeb;
     }
+}
+.generate-result-input:focus {
+    border: 1px solid #659be7;
 }
 :deep(.el-dialog__body) {
     padding: 10px;
