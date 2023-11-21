@@ -312,36 +312,22 @@ const handleEnterKeyChat = async () => {
 
         inputQuestion.value = '';
         try {   
-            const result = await fetchChat(chatItemId.value,commonStore.chatHistory.concat(commonStore.newChatCard));
-
-            const newHistory = result.data;
-            commonStore.setActiveTypeText('');
-            const typeText = result.data.answer;
-
-            await nextTick();
-            let scrollEl: HTMLElement | null = null;
-            isTyping.value = true;
-
-            let i = 0;
-            const timer = setInterval(async () => {
-                commonStore.setActiveTypeText(commonStore.activeTypeText + typeText.charAt(i));
-                if (!scrollEl) {
-                    scrollEl = document.querySelector('.generate-result-input') as HTMLElement;
-                }
-                await nextTick();
-                if (scrollEl) {
-                    scrollEl.scrollTop = scrollEl.scrollHeight;
-                }
-                i++;
-                if (i > typeText.length) {
-                    isTyping.value = false;
-                    clearInterval(timer);
-                    history.value = commonStore.chatHistory;
-                    commonStore.addChatHistory(newHistory);
-                }
-                //50:打字速度
-            }, 50);
-            generateStatus.value = CommonStatusEnums.SUCCESS;
+            console.log('id',chatItemId.value)
+            //处于无对话的聊天框内
+            if(!chatItemId.value){
+                await fetchNewChat({
+                    chatTitle: activeQuestion.value,
+                }).then( async (result: any) => {
+                    chatItemId.value = result.data;
+                    commonStore.addChat(result.data,activeQuestion.value);
+                    ElMessage.success('创建新的对话成功')
+                    const data = await fetchChat(chatItemId.value,commonStore.chatHistory.concat(commonStore.newChatCard));
+                    generate(data);
+                })
+            }else{
+                const result = await fetchChat(chatItemId.value,commonStore.chatHistory.concat(commonStore.newChatCard));
+                generate(result);
+            }
         } catch (error: any) {
             isCreating.value = false;
             ElMessage.error('生成失败，请稍后再试！')
@@ -349,6 +335,37 @@ const handleEnterKeyChat = async () => {
     }
 }
 
+//封装请求及打字
+const generate = async (result: any) => {
+    const newHistory = result.data;
+    commonStore.setActiveTypeText('');
+    const typeText = result.data.answer;
+
+    await nextTick();
+    let scrollEl: HTMLElement | null = null;
+    isTyping.value = true;
+
+    let i = 0;
+    const timer = setInterval(async () => {
+    commonStore.setActiveTypeText(commonStore.activeTypeText + typeText.charAt(i));
+    if (!scrollEl) {
+        scrollEl = document.querySelector('.generate-result-input') as HTMLElement;
+    }
+    await nextTick();
+    if (scrollEl) {
+        scrollEl.scrollTop = scrollEl.scrollHeight;
+    }
+    i++;
+     if (i > typeText.length) {
+        isTyping.value = false;
+        clearInterval(timer);
+        history.value = commonStore.chatHistory;
+        commonStore.addChatHistory(newHistory);
+    }
+    //50:打字速度
+    }, 50);
+    generateStatus.value = CommonStatusEnums.SUCCESS;
+}
 
 //复制
 const handleCopy = (text:string) => {
