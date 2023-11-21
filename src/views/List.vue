@@ -127,7 +127,7 @@
                                 <el-input v-model="editQuestion" placeholder="请输入问题" clearable/>
                             </el-form-item>
                             <el-form-item label="答案：">
-                                <el-input v-model="editAnswer" placeholder="请输入问题的答案" type="textarea" autosize/>
+                                <el-input v-model="editAnswer" placeholder="请输入问题的答案" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }"/>
                             </el-form-item>
                             <el-form-item >
                                 <el-button type="primary" @click="GotoChatGPT">提问ChatGPT</el-button>
@@ -491,6 +491,7 @@ const handleEditMyQuestion = async () => {
         height: 100px;
         background-color: #fff;
         flex: 1;
+        color: #767d85;
         opacity: 0.6;
         padding: 16px;
         margin-bottom: 16px;
@@ -586,9 +587,9 @@ const handleEditMyQuestion = async () => {
     }
 }
 .question-edit {
-    width: 60%;
+    width: 50%;
     background-color: #fff;
-    padding: 40px 50px 20px 10px;
+    padding: 40px 100px 20px 10px;
     margin-bottom: 20px;
     border-radius: 8px;
 }

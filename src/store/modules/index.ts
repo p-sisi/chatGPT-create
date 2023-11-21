@@ -6,8 +6,9 @@ interface commonData {
     userName: string;   //用户昵称
     chatList: any;       //对话列表
     chatHistory: any;   //聊天历史记录
-    activeTypeText: string;  //完成打字的文本
+    activeTypeText: string;  //打字效果的文本
     selfQuestionList: any;   //自问自答列表
+    newChatCard: any;  //正在创作的卡片内容
 }
 
 export const useCommonStore = defineStore('commonState', {
@@ -19,6 +20,12 @@ export const useCommonStore = defineStore('commonState', {
         chatHistory: [],
         activeTypeText: '',
         selfQuestionList: [],
+        newChatCard: {
+            dialogId: 0,
+            question: '',
+            answer: '',
+            collect: false,
+        },
     }),
     actions: {
         setLoginDialogOpen(isOpen: boolean) {
@@ -70,6 +77,9 @@ export const useCommonStore = defineStore('commonState', {
         changeChatHistory(chat: object) {
             this.chatHistory.splice(this.chatHistory.length - 1, 1, chat);
         },
+        setChatHistory(chat: any) {
+            this.chatHistory = chat;
+        },
         setChatCollect(id:number, collect: boolean) {
             const List = this.chatHistory;
             const index = List.findIndex((item: any) => item.dialogId === id);
@@ -96,6 +106,14 @@ export const useCommonStore = defineStore('commonState', {
             const index = List.findIndex((item: any) => item.id === id);
             List[index] = chat;
             this.selfQuestionList = List;
+        },
+        //改变生成卡片的问题
+        setNewChatCardQuestion(text: string) {
+            this.newChatCard.question = text;
+        },
+        //改变生成卡片的答案
+        setNewChatCardAnswer(text: string) {
+            this.newChatCard.answer = text;
         },
     },
     persist: [

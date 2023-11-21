@@ -16,19 +16,29 @@
                         v-for="item in commonStore.chatList"
                         :key="item.id"
                         @click="clickChat(item)"
+                        :class="{ 'selected': item.title === activeCollectRadio }"
+
                         >
-                        <div class="chat-title">
-                            {{ item.title }}
-                            <el-dropdown trigger="click">
+                        <div class="chat-title" >
+                            <div>
+                                {{ item.title }}
+                            </div>
+                            <div>
+                                <el-dropdown trigger="click">
                                 <el-icon style="margin-top: 16px;"><MoreFilled /></el-icon>
                                 <template #dropdown>
                                     <el-dropdown-menu>
-                                        <el-dropdown-item :icon="EditPen" @click="handleResetTitle(item)">编辑</el-dropdown-item>
-                                        <el-dropdown-item :icon="Delete" @click="handleDeleteChat(item)">删除
+                                        <el-dropdown-item :icon="EditPen" @click="handleResetTitle(item)">
+                                            编辑
+                                        </el-dropdown-item>
+                                        <el-dropdown-item :icon="Delete" @click="handleDeleteChat(item)">
+                                            删除
                                         </el-dropdown-item>  
                                     </el-dropdown-menu>
                                 </template>
                             </el-dropdown>
+                            </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -36,11 +46,12 @@
             <!-- 右边 -->
                 <div class="container-right">
                     <el-scrollbar height="600px">
-                        <div class="empty-img" v-show="isEmptyChat">
+                        <div class="empty-img" v-show="commonStore.chatHistory.length == 0 && isGenerating == false && isTyping == false">
                             <img src="../assets/image/empty-create.jpg" alt="">
                         </div>  
 
-                        <div 
+                        <div v-show="commonStore.chatHistory.length !== 0 || isGenerating == true || isTyping == true">
+                            <div 
                             class="no-empty"
                             v-for="item in history"
                             :key="item.dialogId"
@@ -73,25 +84,22 @@
                             </div>
                         </div>
 
-                        <!-- 生成状态卡片 -->
-                        <div v-show=" isCreating ">
-                            <div class="empty-img" v-show="isEmptyChat">
-                                <img src="../assets/image/empty-create.jpg" alt="">
-                            </div>
-
+                        <!-- 生成状态卡片，绑定的数据为独立的，展示：创作状态 或者 打字状态 -->
+                        <div v-show=" isGenerating || isTyping">
                             <div class="no-empty">
+                                <!-- 用户 -->
                                 <div class="chat-right">
                                     <div class="chat-right-user">
-                                        <div class="chat-question">{{ newChatData.question }}</div>
+                                        <div class="chat-question">{{ activeQuestion }}</div>
                                         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
                                     </div> 
                                 </div>
+                                <!-- chatGPT -->
                                 <div class="chat-left">
                                     <el-avatar> Chat </el-avatar>
-                                    <div
-                                        :class="{ 'active-chat-answer': isCreating ,'chat-answer': !isCreating}"
+                                    <div :class="{ 'active-chat-answer': isCreating ,'chat-answer': !isCreating}"
                                     >
-                                        <el-skeleton :rows="3" animated v-if="isCreating"/>
+                                        <el-skeleton :rows="3" animated v-if="isGenerating == true"/>
                                         <el-input
                                             v-else
                                             ref="generateResultInput"
@@ -105,6 +113,8 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
+                        
                     </el-scrollbar>
 
                     <!-- input问答框 -->
@@ -113,7 +123,7 @@
                             <el-input 
                                 v-model="inputQuestion" 
                                 placeholder="Please input question" 
-                                :autosize="{ minRows: 1, maxRows: 4 }"
+                                rows="2"
                                 type="textarea"
                                 @keyup.enter="handleEnterKeyChat"
                             />
@@ -134,9 +144,9 @@
             </template>
         </el-dialog>
 
-        <!-- 新建对话 -->
-        <el-dialog v-model="newChatDialog" title="新建对话" width="30%">
-            <el-input v-model="newChatTitle" placeholder="请输入新对话标题" clearable />
+        <!-- 新建对话 --> 
+        <el-dialog v-model="newChatDialog" title="新建对话" width="30%"  align-center>
+            <el-input v-model="newChatTitle" placeholder="请输入新对话标题" clearable style="margin: 10px;max-width: 95%"/>
             <template #footer>
                 <span class="dialog-footer">
                     <el-button @click="newChatDialog = false">取消</el-button>
@@ -185,7 +195,7 @@ import { fetchChatList,
         fetchCancelCollectChat,
         fetchChat } from '@/apis';
 import { ElMessage } from 'element-plus';
-import { COLLECT_TYPE } from '@/content';
+import { COLLECT_TYPE, CommonStatusEnums } from '@/content';
 
 
 const commonStore = useCommonStore();
@@ -204,19 +214,16 @@ onMounted( async () => {
 //点击标题
 const history = ref([]);
 const chatItemId = ref();
+const isActiveChatItem = ref(false);
+const activeCollectRadio = ref('');
 
 const clickChat = (item: any) => {
-    console.log('item',item)
+    console.log('dianji',item)
+    isActiveChatItem.value = true;
     commonStore.getChatHistory(item.chatId);
     history.value = commonStore.chatHistory;
     chatItemId.value = item.chatId;
-    console.log('chatItemId',chatItemId.value)
-    console.log('history',history.value)
 }
-
-const isEmptyChat = computed(() => {
-    return history.value.length == 0 ? true : false;
-})
 
 //编辑title
 const resetTitleDialog = ref(false);
@@ -250,6 +257,7 @@ const handleDeleteChat = async (item: any) => {
         await fetchDeleteChat(item.chatId);
         commonStore.deleteChat(item.chatId);
         ElMessage.success('删除成功');
+        commonStore.setChatHistory([]);
     } catch (error:any) {
         ElMessage.error(error.message);
     }
@@ -270,44 +278,55 @@ const handleNewChat = async () => {
         chatItemId.value = result.data;
         ElMessage.success('新建成功');
         commonStore.addChat(result.data,newChatTitle.value);
+        newChatTitle.value = '';
     } catch (error: any) {
         ElMessage.error(error.message);
     }
 }
 
 //提问
-const inputQuestion = ref('');
+const generateResultInput = ref<HTMLElement | null>(null);
+const inputQuestion = ref('');    //输入框
 const isTyping = ref(false);
 const isCreating = ref(false);
-let newChatData = reactive({
-    dialogId: 0,
-    question: '',
-    answer: '',
-    collect: false,
+
+const generateStatus = ref(CommonStatusEnums.SUCCESS);
+
+const isGenerating = computed(() => {
+    return generateStatus.value === CommonStatusEnums.PENDING;
+})
+
+const generateResult = computed({
+    get: () => commonStore.activeTypeText || '',
+    set: (value) => commonStore.setActiveTypeText(value)
 });
 
-let resultData = ref();
-const handleEnterKeyChat = async () => {
-    //TODO:生成结果状态没处理 
+const activeQuestion = ref('');
+
+const handleEnterKeyChat = async () => { 
     if (inputQuestion.value) {
-        isCreating.value = true;
-        commonStore.addChatHistory(newChatData);
-        newChatData.question = inputQuestion.value;
+        debugger
+        generateStatus.value = CommonStatusEnums.PENDING;
+        console.log('开始提问');
+        // //开始创作，没有打字
+        // isCreating.value = true;
+
+        activeQuestion.value = inputQuestion.value;
+        commonStore.setNewChatCardQuestion(inputQuestion.value);
+
         inputQuestion.value = '';
-        
-        try {
-            await fetchChat(chatItemId.value,commonStore.chatHistory).then((result: any) => {
-                console.log('请求结果',result)
-                resultData.value = result.data;
-                commonStore.changeChatHistory(resultData.value);
-                console.log('历史记录',commonStore.chatHistory);
+        try {   
+            const result = await fetchChat(chatItemId.value,commonStore.chatHistory.concat(commonStore.newChatCard));
 
-            })
+            //保存请求的新历史记录
+            const newHistory = result.data;
 
+            commonStore.setActiveTypeText('');
+            const typeText = result.data.answer;
 
-            const typeText = resultData.value.answer;
             await nextTick();
             let scrollEl: HTMLElement | null = null;
+            //开始打字
             isTyping.value = true;
 
             let i = 0;
@@ -324,24 +343,20 @@ const handleEnterKeyChat = async () => {
                 if (i > typeText.length) {
                     isTyping.value = false;
                     clearInterval(timer);
+                    history.value = commonStore.chatHistory;
                 }
                 //50:打字速度
-            }, 100);
-                
+            }, 50);
+            generateStatus.value = CommonStatusEnums.SUCCESS;
+            //先执行这里再执行打字，所以会先出现一个card
+            commonStore.addChatHistory(newHistory);
         } catch (error: any) {
             isCreating.value = false;
-            inputQuestion.value = newChatData.question;
             ElMessage.error('生成失败，请稍后再试！')
         }
     }
 }
 
-const generateResultInput = ref<HTMLElement | null>(null);
-
-const generateResult = computed({
-    get: () => commonStore.activeTypeText || '',
-    set: (value) => commonStore.setActiveTypeText(value)
-});
 
 //复制
 const handleCopy = (text:string) => {
@@ -421,6 +436,7 @@ const handleCancelCollect = async (item: any) =>{
                 position: absolute;
                 font-size: 18px;
                 font-weight: 600;
+                color: #213547;
                 left: 50px;
                 top: 8px;
             }
@@ -440,8 +456,12 @@ const handleCancelCollect = async (item: any) =>{
         }
         .container-left-chat {
             .chat-title {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
                 height: 46px;
                 padding-left: 10px;
+                padding-right: 16px;
                 color: black;
                 line-height: 46px;
                 font-size: 16px;
@@ -454,6 +474,13 @@ const handleCancelCollect = async (item: any) =>{
                 background-color: #f9f3f0;
                 border-radius: 8px;
                 opacity: 0.6;
+            }
+            .isActiveChatItem {
+                background-color: #fff;
+            }
+            .chat-title.selected {     
+                background: #351c75;
+                color: #e69138;
             }
         }
     }
@@ -519,7 +546,7 @@ const handleCancelCollect = async (item: any) =>{
     position: relative;
     .chat-input {
         position: fixed;
-        bottom: 20px;
+        bottom: 40px;
         right: 200px;
         width: 50%;
         border-top: 1px solid #ccc; 
@@ -539,7 +566,6 @@ const handleCancelCollect = async (item: any) =>{
         padding:0px;
     }
 }
-
 :deep(.el-dialog__body) {
     padding: 10px;
 }

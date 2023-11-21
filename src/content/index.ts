@@ -59,3 +59,10 @@ export const COLLECT_LOCATION = {
     MULT_CHAT: 'chat',  //多轮GPT
     ONE_CHAT: 'oneShot',  //单轮问答
 }
+
+//结果生成状态
+export enum CommonStatusEnums {
+    PENDING = 'pending', //生成中
+    SUCCESS = 'success', //生成成功
+    FAIL = 'fail' //生成失败
+}
