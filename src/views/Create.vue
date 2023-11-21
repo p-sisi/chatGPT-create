@@ -207,7 +207,7 @@ onMounted( async () => {
         commonStore.chatList = result.data;
         chatList.value = result.data
     } catch (error: any) {
-        ElMessage.error(error.message);
+        console.log(error);
     }
 })
 
@@ -403,7 +403,7 @@ const handleCollect = async () => {
         CollectTitleDialog.value = false;
         commonStore.setChatCollect(collectDataItem.value.dialogId,true);
     } catch (error:any) {
-        ElMessage.error(error.message);
+        console.log(error.message);
     }
 }
 const handleCancelCollect = async (item: any) =>{

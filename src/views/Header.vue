@@ -49,6 +49,7 @@
         <el-dialog
             v-model="commonStore.isLoginDialogOpen"
             width="50%"
+            @close="loginDialogOpen"
         >
             <div class="login-dialog">
                 <div class="login-dialog-left"></div>
@@ -87,10 +88,26 @@
                     <div class="sign" v-if="isActiveSign == true">
                         <el-input v-model="newUserCount"  placeholder="请输入用户注册账号" size="large" style="margin-bottom: 16px;" >
                         </el-input>
-                        <el-input v-model="newUserPassword1" type="password" show-password placeholder="请输入密码" size="large" style="margin-bottom: 16px;" >
+                        <el-input 
+                            v-model="newUserPassword1" 
+                            type="password" show-password 
+                            placeholder="请输入密码" 
+                            size="large" 
+                            style="margin-bottom: 16px;" 
+                            @input="checkSamePassword">
                         </el-input>
-                        <el-input v-model="newUserPassword2" type="password" show-password placeholder="确认账户密码" size="large" >
+                        <el-input 
+                            v-model="newUserPassword2" 
+                            type="password" 
+                            show-password 
+                            placeholder="确认账户密码" 
+                            size="large" 
+                            @input="checkSamePassword">
                         </el-input>
+                        <div class="flex" v-show="!isSamePassword">
+                            <el-icon color="#dc362e"><CircleClose /></el-icon>
+                            <div style="color:#dc362e;margin-left: 4px;">两次密码输入不一致！</div>
+                        </div>
                         <div class="login-btn">
                             <el-button type="primary" @click="handleSign" style="width: 80%; margin: 30px 30px 10px 30px;" color="#e69138" >注册</el-button>
                         </div>
@@ -130,7 +147,7 @@
                     <div class="w-50">确认新密码</div>
                     <el-input v-model="newResetPassword2" type="password" show-password placeholder="确认新密码" size="large" >
                     </el-input>
-                </div>
+                </div>          
                 <div class="login-btn">
                     <el-button plain style="margin: 20px 0px 0px 150px;" color="#e69138" @click="closeResetDialog">取消</el-button>
                     <el-button type="primary" @click="handleResetPassword" style="margin: 30px 30px 10px 34px;" color="#e69138" >重置密码</el-button>
@@ -147,7 +164,7 @@ import { fetchLoginIn, fetchSignIn, fetchResetPassword, fetchCollectList } from 
 import { ref, onMounted } from 'vue';
 import router from '@/router/index.ts';
 import { ElMessage } from 'element-plus';
-import { ArrowDown } from '@element-plus/icons-vue';
+import { ArrowDown, CircleClose } from '@element-plus/icons-vue';
 import { isKeyInSessionStorage, debounce } from '@/until';
 import { useCommonStore } from '@/store';
 
@@ -222,10 +239,23 @@ const newUserCount = ref('');
 const newUserPassword1 = ref('');
 const newUserPassword2 = ref('');
 
+const isSamePassword = ref(true);
+
 const handleSignOpen = () => {
     commonStore.setLoginDialogOpen(true);
     isActiveSign.value = false;
     isActiveLogin.value = true;
+}
+
+//检车密码输入是否一致
+const checkSamePassword = () => {
+    if(newUserPassword1.value !== '' && newUserPassword2.value !== '') {
+        if(newUserPassword1.value === newUserPassword2.value) {
+            isSamePassword.value = true;
+        }else {
+            isSamePassword.value = false;
+        }
+    }
 }
 
 const handleSign = async () => {
@@ -240,7 +270,14 @@ const handleSign = async () => {
         }
         await fetchSignIn(params);
         ElMessage.success('注册成功！');
-        commonStore.setLoginDialogOpen(false);
+
+        //注册成功，进入登录页面
+        isActiveLogin.value = true;
+        isActiveSign.value = false;
+        userCount.value = 
+
+        userCount.value = newUserCount.value;
+
         newUserCount.value = '';
         newUserPassword1.value = '';
         newUserPassword2.value = '';
@@ -272,7 +309,7 @@ const handleResetPasswordDebounced = debounce(async () => {
     ElMessage.success('密码重置成功！');
     resetPasswordVisible.value = false;
   } catch (error: any) {
-    ElMessage.error(error);
+    console.log(error);
   }
 }, 500); 
 
@@ -298,6 +335,14 @@ const handleLogout =  () => {
   } catch (error) {
     console.error('退出登录失败', error);
   }
+}
+
+//登录弹窗关闭
+const loginDialogOpen = () => {
+    newUserPassword1.value = '';
+    newUserPassword2.value = '';
+    isSamePassword.value = true;
+    newUserCount.value = '';
 }
 </script>
 

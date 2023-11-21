@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { AxiosRequestConfig, AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { ElMessage } from 'element-plus';
 import { useCommonStore } from '@/store';
+import router from '@/router/index.ts';
 
 const commonStore = useCommonStore();
 
@@ -74,11 +75,12 @@ export class CustomAxiosInstance {
                 }
 
                 if (error.code === 'ERR_NETWORK') {
-                    console.log('网络异常, 请检查网络');
+                    ElMessage.error('网络异常, 请检查网络');
                 }
 
                 if(error.response?.status === 401) {
                     ElMessage.error('登录已过期或未登录，请登录后重试！');
+                    router.push('/homepage');
                     commonStore.setLoginDialogOpen(true);
                 }
                 console.log('response interceptor error', error);
