@@ -1,31 +1,33 @@
 <template>
     <div class="container">
             <!-- 左边 -->
-                <div class="container-left" >
-                    <div class="container-left-user">
-                        <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
-                        <div class="username">{{ commonStore.userName }}</div>
-                        <div class="divide"></div>
-                    </div>
-                    <el-button class="container-left-btn" @click="newChatDialog = true" >
-                        <el-icon style="margin-right: 8px;" ><Plus /></el-icon>
-                        New Chat
-                    </el-button>
+            <div class="container-left" >
+                <!-- 用户信息 -->
+                <div class="container-left-user">
+                    <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
+                    <div class="username">{{ commonStore.userName }}</div>
+                    <div class="divide"></div>
+                </div>
+
+                <el-button class="container-left-btn" @click="newChatDialog = true" >
+                    <el-icon style="margin-right: 8px;" ><Plus /></el-icon>
+                     New&nbsp;Chat
+                </el-button>
+
+                <el-scrollbar height="450px">
                     <div
                         class="container-left-chat"
                         v-for="item in commonStore.chatList"
                         :key="item.id"
                         @click="clickChat(item)"
-                        :class="{ 'selected': item.title === activeCollectRadio }"
-
                         >
-                        <div class="chat-title" >
-                            <div>
+                        <div class="chat-title" :class="{ 'selected': item.chatId === activeCollectRadio }">
+                            <div class="chat-title-title">
                                 {{ item.title }}
                             </div>
                             <div>
                                 <el-dropdown trigger="click">
-                                <el-icon style="margin-top: 16px;"><MoreFilled /></el-icon>
+                                <el-icon style="margin-top: 16px;" v-show="item.chatId === activeCollectRadio"><ArrowDown /></el-icon>
                                 <template #dropdown>
                                     <el-dropdown-menu>
                                         <el-dropdown-item :icon="EditPen" @click="handleResetTitle(item)">
@@ -41,7 +43,8 @@
                             
                         </div>
                     </div>
-                </div>
+                </el-scrollbar>
+            </div>
 
             <!-- 右边 -->
                 <div class="container-right">
@@ -145,12 +148,12 @@
         </el-dialog>
 
         <!-- 新建对话 --> 
-        <el-dialog v-model="newChatDialog" title="新建对话" width="30%"  align-center>
+        <el-dialog v-model="newChatDialog" title="新建对话" width="30%"  align-center @keyup.enter="handleEnterKey">
             <el-input v-model="newChatTitle" placeholder="请输入新对话标题" clearable style="margin: 10px;max-width: 95%"/>
             <template #footer>
                 <span class="dialog-footer">
                     <el-button @click="newChatDialog = false">取消</el-button>
-                    <el-button type="primary" @click="handleNewChat">
+                    <el-button type="primary" @click="handleNewChat" @keyup.enter="handleNewChat" tabindex="0">
                     新建
                     </el-button>
                 </span>
@@ -184,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import { EditPen, Delete, MoreFilled, Plus, DocumentCopy} from '@element-plus/icons-vue';
+import { EditPen, Delete, Plus, DocumentCopy, ArrowDown} from '@element-plus/icons-vue';
 import { useCommonStore } from '@/store';
 import { ref, onMounted, computed, reactive, nextTick } from 'vue';
 import { fetchChatList,
@@ -201,6 +204,10 @@ import { COLLECT_TYPE, CommonStatusEnums } from '@/content';
 const commonStore = useCommonStore();
 
 const chatList = ref<any>();
+
+//当前激活的对话标题
+const activeCollectRadio = ref();
+
 onMounted( async () => {
     try {
         const result = await fetchChatList();
@@ -215,14 +222,15 @@ onMounted( async () => {
 const history = ref([]);
 const chatItemId = ref();
 const isActiveChatItem = ref(false);
-const activeCollectRadio = ref('');
 
 const clickChat = (item: any) => {
-    console.log('dianji',item)
     isActiveChatItem.value = true;
     commonStore.getChatHistory(item.chatId);
     history.value = commonStore.chatHistory;
     chatItemId.value = item.chatId;
+    console.log('标题',item.title);
+    //改变激活的标题
+    activeCollectRadio.value = item.chatId
 }
 
 //编辑title
@@ -269,19 +277,36 @@ const newChatDialog = ref(false);
 const newChatTitle = ref('');
 
 const handleNewChat = async () => {
+    
     try {
         const params = {
             chatTitle: newChatTitle.value
         }
         const result = await fetchNewChat(params);
         newChatDialog.value = false;
+
+        //更新当前激活的对话id
         chatItemId.value = result.data;
+
         ElMessage.success('新建成功');
         commonStore.addChat(result.data,newChatTitle.value);
+
+        //修改当前激活的chat
+        activeCollectRadio.value = result.data;
+
         newChatTitle.value = '';
+
+        history.value = [];
+        commonStore.setChatHistory([]);
     } catch (error: any) {
         ElMessage.error(error.message);
     }
+}
+
+const handleEnterKey = (event: any) => {
+    if (event.keyCode === 13) {
+        handleNewChat();
+      }
 }
 
 //提问
@@ -327,6 +352,9 @@ const handleEnterKeyChat = async () => {
             }else{
                 const result = await fetchChat(chatItemId.value,commonStore.chatHistory.concat(commonStore.newChatCard));
                 generate(result);
+                console.log('历史记录',commonStore.chatHistory)
+                console.log('对话记录',commonStore.chatList)
+                
             }
         } catch (error: any) {
             isCreating.value = false;
@@ -361,6 +389,7 @@ const generate = async (result: any) => {
         clearInterval(timer);
         history.value = commonStore.chatHistory;
         commonStore.addChatHistory(newHistory);
+        commonStore.updateChat(chatItemId.value,commonStore.chatHistory)
     }
     //50:打字速度
     }, 50);
@@ -478,18 +507,24 @@ const handleCancelCollect = async (item: any) =>{
                 background: #f9f3f0;
                 border-radius: 8px;
                 margin-bottom: 10px;
+                .chat-title-title {
+                    width: calc(100% - 20px);
+                    overflow: hidden; 
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                }
+            }
+            .selected {     
+                background: #fadbc5;
+                font-size: 18px;
             }
             .chat-title:hover {
-                background-color: #f9f3f0;
+                background-color: #f7ddcb;
                 border-radius: 8px;
                 opacity: 0.6;
             }
             .isActiveChatItem {
                 background-color: #fff;
-            }
-            .chat-title.selected {     
-                background: #351c75;
-                color: #e69138;
             }
         }
     }

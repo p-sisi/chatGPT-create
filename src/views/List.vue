@@ -326,7 +326,8 @@ const handleClick = async (e) => {
             collectData.value = collectResult.data;
             commonStore.setCollectList(collectResult.data);
         } catch (error: any) {
-            ElMessage.error(error.message)
+            console.log('无法使用收藏功能');
+            activeTab.value = '问答列表';
         }
     }
     if(e.props.label == '我的问答') {

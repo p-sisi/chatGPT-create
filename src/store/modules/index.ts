@@ -60,6 +60,12 @@ export const useCommonStore = defineStore('commonState', {
             }
             this.chatList.push(chat);
         },
+        updateChat(id: number, dialogs: any) {
+            const List = this.chatList;
+            const index = List.findIndex((item: any) => item.chatId === id);
+            List[index].allDialogs = dialogs;
+            this.chatList = List;
+        },
         editChatTitle(id: string, title: string) {
             const List = this.chatList;
             const index = List.findIndex((item: any) => item.chatId === id);
