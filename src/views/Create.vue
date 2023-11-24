@@ -48,13 +48,14 @@
 
             <!-- 右边 -->
                 <div class="container-right">
-                    <el-scrollbar height="600px">
+                    <el-scrollbar height="600px"  ref="chatScrollbar">
                         <div class="empty-img" v-show="commonStore.chatHistory.length == 0 && isGenerating == false && isTyping == false">
                             <img src="../assets/image/empty-create.jpg" alt="">
                         </div>  
 
                         <div v-show="commonStore.chatHistory.length !== 0 || isGenerating == true || isTyping == true">
                             <div 
+                            ref="historyItemRef"
                             class="no-empty"
                             v-for="item in history"
                             :key="item.dialogId"
@@ -88,7 +89,7 @@
                         </div>
 
                         <!-- 生成状态卡片，绑定的数据为独立的，展示：创作状态 或者 打字状态 -->
-                        <div v-show=" isGenerating || isTyping">
+                        <div v-show=" isGenerating || isTyping" id="creatingCard">
                             <div class="no-empty">
                                 <!-- 用户 -->
                                 <div class="chat-right">
@@ -136,7 +137,7 @@
 
         <!-- 编辑名字 -->
         <el-dialog v-model="resetTitleDialog" title="重命名对话标题" width="30%">
-            <el-input v-model="newTitle" placeholder="请输入新对话标题" />
+            <el-input v-model="newTitle" placeholder="请输入新对话标题" style="margin: 10px;max-width: 95%"/>
             <template #footer>
                 <span class="dialog-footer">
                     <el-button @click="resetTitleDialog = false">取消</el-button>
@@ -223,14 +224,25 @@ const history = ref([]);
 const chatItemId = ref();
 const isActiveChatItem = ref(false);
 
-const clickChat = (item: any) => {
+const historyItemRef = ref(null);
+
+const clickChat = async (item: any) => {
     isActiveChatItem.value = true;
     commonStore.getChatHistory(item.chatId);
     history.value = commonStore.chatHistory;
     chatItemId.value = item.chatId;
-    console.log('标题',item.title);
     //改变激活的标题
-    activeCollectRadio.value = item.chatId
+    activeCollectRadio.value = item.chatId;
+    if(historyItemRef.value) {
+        const lastHistoryItem = historyItemRef.value[historyItemRef.value.length - 1];
+        console.log(lastHistoryItem);
+        await nextTick();
+        lastHistoryItem.scrollIntoView({
+            behavior: 'smooth',
+            block: 'end',
+            inline: 'end'
+        })
+    }
 }
 
 //编辑title
@@ -331,7 +343,12 @@ const activeQuestion = ref('');
 const handleEnterKeyChat = async () => { 
     if (inputQuestion.value) {
         generateStatus.value = CommonStatusEnums.PENDING;
-
+        await nextTick();
+        document.getElementById('creatingCard')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'end',
+            inline: 'end'
+        })
         activeQuestion.value = inputQuestion.value;
         commonStore.setNewChatCardQuestion(inputQuestion.value);
 
@@ -380,6 +397,11 @@ const generate = async (result: any) => {
         scrollEl = document.querySelector('.generate-result-input') as HTMLElement;
     }
     await nextTick();
+    document.getElementById('creatingCard')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'end'
+    })
     if (scrollEl) {
         scrollEl.scrollTop = scrollEl.scrollHeight;
     }
@@ -393,6 +415,7 @@ const generate = async (result: any) => {
     }
     //50:打字速度
     }, 50);
+
     generateStatus.value = CommonStatusEnums.SUCCESS;
 }
 
@@ -467,6 +490,7 @@ const handleCancelCollect = async (item: any) =>{
         border-radius: 6px;
         border: 1px solid #f6e9e1;
         background-color: #f6e9e1;
+        overflow: hidden;
         .container-left-user {
             position: relative;
             margin-bottom: 6px;

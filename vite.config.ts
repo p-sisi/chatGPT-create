@@ -9,7 +9,7 @@ export default defineConfig(() => {
       open: true,
       proxy: {
           '^(/collect|/sysDialog|/user|/chat|/myQuestion)': {
-              target: 'http://10.33.102.11:8081/',
+              target: 'http://10.33.9.244:8081/',
               changeOrigin: true,
           }
       }
